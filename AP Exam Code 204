@@ -1,0 +1,179 @@
+// p5.collide2D: https://github.com/bmoren/p5.collide2D
+// p5.collide2D License: https://github.com/bmoren/p5.collide2D/blob/master/LICENSE
+
+// Global Varibles
+// circle
+let circleX;
+let circleY;
+let radius;
+let dx;
+let dy;
+// paddle
+let rectX;
+let rectY;
+let rectW;
+let rectH;
+// brick
+let bricks;
+let brickNumber = 19;
+let points = 0;
+
+class Brick_Methods {
+  //look at functions notes...
+  constructor(brickNumber, p) {
+    this.bricklist = [];
+    this.brickXlist = [];
+    this.brickYlist = [];
+    this.brickWlist = [];
+    this.brickHlist = [];
+    this.numBrick = brickNumber;
+    this.deleteBricklist = [];
+    this.points = p;
+    this.hit = 0;
+  }
+
+  createBrickGrid() {
+    for (let i = 0; i <= this.numBrick; i++) {
+      // create brickNumber amount of bricks in a 200 by 200 pixle space
+      this.brickX = random(100, 500);
+      append(this.brickXlist, this.brickX);
+      this.brickY = random(100, 400);
+      append(this.brickYlist, this.brickY);
+      this.brickW = 15;
+      append(this.brickWlist, this.brickW);
+      this.brickH = 15;
+      append(this.brickHlist, this.brickH);
+      // I have a bunch of lists with the needed information to build the bricks.
+      // List number 0 is the "first brick" I need to create.
+    }
+  }
+  spawnBrick() {
+    for (let i = 0; i <= this.numBrick; i++) {
+      fill("rgb(222, 175, 47)");
+      rect(
+        this.brickXlist[i],
+        this.brickYlist[i],
+        this.brickWlist[i],
+        this.brickHlist[i]
+      );
+    }
+  }
+
+  ballHitBrick(cX, cY, radius) {
+    for (let i = this.brickXlist.length - 1; i >= 0; i--) {
+      this.hit = collideRectCircle(
+        this.brickXlist[i],
+        this.brickYlist[i],
+        this.brickWlist[i],
+        this.brickHlist[i],
+        cX,
+        cY,
+        radius
+      );
+      if (this.hit == true) {
+        this.deleteBricklist = this.brickXlist.splice([i], 1);
+        this.deleteBricklist = this.brickYlist.splice([i], 1);
+        this.deleteBricklist = this.brickWlist.splice([i], 1);
+        this.deleteBricklist = this.brickHlist.splice([i], 1);
+        this.numBrick = this.numBrick - 1;
+        this.points++;
+      }
+    }
+    if (this.brickXlist.length === 0) {
+      this.numBrick = random(15, 25);
+      this.createBrickGrid();
+      this.spawnBrick();
+    }
+    fill(51);
+    textSize(15);
+    text("Points Earned: " + this.points, 10, 12);
+  }
+}
+
+function setup() {
+  createCanvas(600, 600);
+  // circle
+  circleX = width * 0.25;
+  circleY = height * 0.75;
+  radius = 10;
+  dx = random(-3, 3);
+  dy = -3;
+  // paddle
+  rectX = width * 0.5;
+  rectY = height * 0.9;
+  rectW = width * 0.25;
+  rectH = width * 0.05;
+  // brick
+  bricks = new Brick_Methods(brickNumber, points);
+  bricks.createBrickGrid();
+}
+
+function draw() {
+  background(220);
+  drawCircle();
+  ballHit_Border();
+  ballHit_Paddle();
+  paddleMaker();
+  bricks.spawnBrick();
+  bricks.ballHitBrick(circleX, circleY, radius);
+}
+
+function drawCircle() {
+  circleX += dx;
+  circleY += dy;
+  fill("rgb(255, 33, 33)");
+  circle(circleX, circleY, radius);
+}
+
+function ballHit_Border() {
+  // to detect when the ball will go off the screen
+  if (circleX < 0 + radius || circleX > width - radius) {
+    dx *= -1;
+  }
+  if (circleY < 0 + radius) {
+    dy *= -1;
+  }
+  if (circleY > height - radius) {
+    noLoop();
+    circleX = width * 0.25;
+    circleY = height * 0.75;
+    dx = random(-2, 2);
+    dy = random(-2, 2);
+    loop();
+  }
+}
+
+function ballHit_Paddle() {
+  let hit = collideRectCircle(
+    rectX,
+    rectY,
+    rectW,
+    rectH,
+    circleX,
+    circleY,
+    radius
+  );
+  if (hit) {
+    dy *= -1.05;
+  }
+}
+
+function paddleMaker() {
+  if (keyIsDown(LEFT_ARROW)) {
+    if (rectX == 0) {
+      rectX += 5;
+    } else {
+      rectX -= 5;
+    }
+  }
+
+  if (keyIsDown(RIGHT_ARROW)) {
+    if (rectX > width - rectW) {
+      rectX -= 5;
+    } else {
+      rectX += 5;
+    }
+  }
+  fill("rgb(0, 255, 255)");
+  rect(rectX, rectY, rectW, rectH);
+}
